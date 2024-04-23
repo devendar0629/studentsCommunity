@@ -11,6 +11,7 @@
   "type": "module",
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.6",
     "@types/nodemailer": "^6.4.14",
     "axios": "^1.6.8",
     "bcryptjs": "^2.4.3",

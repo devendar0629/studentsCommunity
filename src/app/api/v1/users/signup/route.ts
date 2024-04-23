@@ -9,11 +9,11 @@ connectDB();
 
 export async function POST(request: NextRequest) {
     try {
-        let { username, email, password } = await request.json();
+        let { name, username, email, password } = await request.json();
         username = username.trim();
         email = email.trim();
 
-        if ([username, email, password].some(val => !val)) {
+        if ([username, email, password, name].some(val => !val)) {
             return NextResponse.json({ error: "Username or password or email cannot be empty" }, { status: 400 })
         }
 
@@ -27,11 +27,13 @@ export async function POST(request: NextRequest) {
         const hashedPassword = await bcryptjs.hash(password, salt);
 
         let newUser = new User({
+            name,
             email,
             username,
             password: hashedPassword,
         })
 
+        // saved here to get the mongodb _id
         const savedUser = await newUser.save();
 
         const hashedToken = await bcryptjs.hash(savedUser?._id.toString(), 10);
@@ -42,6 +44,7 @@ export async function POST(request: NextRequest) {
 
         const mail = await sendMail("VERIFY_EMAIL", email, savedUser?._id.toString(), hashedToken);
 
+        // CAUTION: Remove the password from response
         return NextResponse.json(new SuccessBody(true, "User signed up successfully", newUser), { status: 201 });
     } catch (error: any) {
         console.log(error.message);
