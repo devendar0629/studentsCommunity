@@ -51,6 +51,6 @@ const userSchema = new mongoose.Schema({
     refreshToken: String
 },{timestamps: true})
 
-const User = mongoose.models.users || mongoose.model("users",userSchema) // To maintain consistency in NextJS , "users" name is used in model creation
+const User = mongoose.models?.users || mongoose.model("users",userSchema) // To maintain consistency in NextJS , "users" name is used in model creation
 
 export default User

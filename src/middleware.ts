@@ -3,23 +3,33 @@ import jwt from "jsonwebtoken"
 import User from "./models/user.model";
 import { connectDB } from "./dbconfig/connectDB";
 
+connectDB();
+
 export function middleware(request: NextRequest) {
+
     try {
-        connectDB();
-        const accessToken = request.cookies.get("accessToken")?.value
+        console.log('--------------- 1 -----------------');
+        const accessToken = request.cookies.get("accessToken")?.value;
+
+        console.log(`-- Access token: ${accessToken}`);
 
         if (!accessToken) return NextResponse.json({ error: "Unauthorized request" }, { status: 401 })
+        console.log('--------------- 2 -----------------');
 
-        const decodedAccessToken: any = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET!, { maxAge: process.env.ACCESS_TOKEN_EXPIRY })
+        const decodedAccessToken: any = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET!, { maxAge: process.env.ACCESS_TOKEN_EXPIRY });
+        console.log('--------------- 3 -----------------');
 
         const user = User.findById(decodedAccessToken?.id).select("-password -refreshToken -accessToken");
+        console.log('--------------- 4 -----------------');
+
         if (!user) {
-            return NextResponse.json({ error: "No user found with the given refresh token" }, { status: 404 })
+            return NextResponse.json({ error: "No user found with the given refresh token" }, { status: 404 });
         }
+        console.log('--------------- 5 -----------------');
 
-        console.log('Middleware !');
+        console.log('---------------- Middleware ----------------- !');
 
-        return NextResponse.next({ request: request })
+        return NextResponse.next({ request: request });
 
     } catch (error: any) {
         console.log(error.message);
@@ -28,29 +38,11 @@ export function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        '/',
-        '/users/',
-        '/signup',
-        '/logout',
-        '/login',
-        '/updateDetails',
-        '/generateAccessToken',
-        '/verifyEmail',
+        '/api/v1/users/login',
+        '/api/v1/users/users/signup',
+        '/api/v1/users/logout',
+        '/api/v1/users/updateDetails',
+        '/api/v1/users/generateAccessToken',
+        '/api/v1/users/verifyEmail',
     ]
 }
-
-// GPT code
-
-// // middleware.ts
-// import { NextRequest, NextResponse } from 'next/server';
-
-// export function middleware(request: NextRequest) {
-//     // Check if the request matches the "/about" path
-//     if (request.nextUrl.pathname === '/about') {
-//         // Redirect to the home page
-//         return NextResponse.redirect(new URL('/home', request.url));
-//     }
-
-//     // Continue to the next middleware or route handler
-//     return NextResponse.next();
-// }
