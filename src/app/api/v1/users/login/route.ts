@@ -4,6 +4,7 @@ import bcryptjs from "bcryptjs"
 import User from "@/models/user.model";
 import { SuccessBody } from "@/utils/Response/SuccessBody";
 import { connectDB } from "@/dbconfig/connectDB";
+import { UserInterface } from "../signup/route";
 
 connectDB();
 
@@ -30,10 +31,9 @@ function convertTimeStringToMilliseconds(timeString: string) {
     return parseInt(value, 10) * millisecondsPerUnit[unit];
 }
 
-
 export async function POST(request: NextRequest) {
     try {
-        let { email, username, password } = await request.json();
+        let { email, username, password }: UserInterface = await request.json();
         email = email?.trim()
         username = username?.trim();
 

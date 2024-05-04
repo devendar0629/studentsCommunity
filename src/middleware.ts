@@ -1,36 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken"
-import User from "./models/user.model";
-import { connectDB } from "./dbconfig/connectDB";
-
-connectDB();
 
 export function middleware(request: NextRequest) {
-
+    console.log(` \x1b[36mSERVER -> ${request.method}\x1b[0m @ ${request.nextUrl.pathname}`);
     try {
-        console.log('--------------- 1 -----------------');
         const accessToken = request.cookies.get("accessToken")?.value;
 
-        console.log(`-- Access token: ${accessToken}`);
+        const publicUrlRegex = /^\/api\/v1\/users\/(login|signup|verifyEmail)$/;
+        const isPublicUrl = publicUrlRegex.test(request.nextUrl.pathname);
 
-        if (!accessToken) return NextResponse.json({ error: "Unauthorized request" }, { status: 401 })
-        console.log('--------------- 2 -----------------');
-
-        const decodedAccessToken: any = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET!, { maxAge: process.env.ACCESS_TOKEN_EXPIRY });
-        console.log('--------------- 3 -----------------');
-
-        const user = User.findById(decodedAccessToken?.id).select("-password -refreshToken -accessToken");
-        console.log('--------------- 4 -----------------');
-
-        if (!user) {
-            return NextResponse.json({ error: "No user found with the given refresh token" }, { status: 404 });
+        if (isPublicUrl && accessToken) {
+            return NextResponse.redirect(new URL('/dashboard', request.url))
         }
-        console.log('--------------- 5 -----------------');
-
-        console.log('---------------- Middleware ----------------- !');
+        else if (!isPublicUrl && !accessToken) {
+            return NextResponse.redirect(new URL('/login', request.url))
+        }
 
         return NextResponse.next({ request: request });
-
     } catch (error: any) {
         console.log(error.message);
     }
@@ -38,11 +23,13 @@ export function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
+        // '/api/v1/users/:path*', // right way
         '/api/v1/users/login',
         '/api/v1/users/users/signup',
         '/api/v1/users/logout',
         '/api/v1/users/updateDetails',
         '/api/v1/users/generateAccessToken',
         '/api/v1/users/verifyEmail',
+        '/api/v1/users/:username*'
     ]
 }

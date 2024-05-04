@@ -1,11 +1,13 @@
 import React from "react"
 
-function page() {
+function Signup() {
     return (
         <>
-            
+            <form>
+                
+            </form>
         </>
     )
 }
 
-export default page
+export default Signup
