@@ -8,14 +8,14 @@ export async function POST(request: NextRequest) {
         const refreshToken = request.cookies.get("refreshToken")?.value;
 
         if (!refreshToken) {
-            return NextResponse.json({ error: "Unauthorized request" }, { status: 401 })
+            return NextResponse.json({ error: "Unauthenticated request" }, { status: 401 })
         }
 
         const decodedToken: any = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET!)
         const user = await User.findById(decodedToken.id).select("-password");
 
         if (!user) return NextResponse.json({ status: 401 })
-        if (user.refreshToken !== refreshToken) return NextResponse.json({ error: "Unauthorized request" }, { status: 401 })
+        if (user.refreshToken !== refreshToken) return NextResponse.json({ error: "Unauthenticated request" }, { status: 401 })
 
         const accessTokenPayload = {
             id: user._id,

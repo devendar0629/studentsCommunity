@@ -1,11 +1,11 @@
 import React from "react"
 
-function page() {
+function Dashboard() {
     return (
         <>
-            <div>page component</div>
+            <div>Dashboard component</div>
         </>
     )
 }
 
-export default page
+export default Dashboard

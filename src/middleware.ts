@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export function middleware(request: NextRequest) {
+// CAUTION: This not an full fledged Route Protection system .
+export async function middleware(request: NextRequest) {
     console.log(` \x1b[36mSERVER -> ${request.method}\x1b[0m @ ${request.nextUrl.pathname}`);
     try {
         const accessToken = request.cookies.get("accessToken")?.value;
@@ -15,7 +16,7 @@ export function middleware(request: NextRequest) {
             return NextResponse.redirect(new URL('/login', request.url))
         }
 
-        return NextResponse.next({ request: request });
+        return NextResponse.next();
     } catch (error: any) {
         console.log(error.message);
     }
@@ -23,10 +24,11 @@ export function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        // '/api/v1/users/:path*', // right way
         '/api/v1/users/login',
-        '/api/v1/users/users/signup',
         '/api/v1/users/logout',
+        '/api/v1/users/signup',
+        '/api/v1/users/dashboard',
+        '/api/v1/users/forgotPassword',
         '/api/v1/users/updateDetails',
         '/api/v1/users/generateAccessToken',
         '/api/v1/users/verifyEmail',

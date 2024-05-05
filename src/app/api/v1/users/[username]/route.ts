@@ -1,7 +1,6 @@
 import { connectDB } from "@/dbconfig/connectDB";
 import User from "@/models/user.model";
 import { SuccessBody } from "@/utils/Response/SuccessBody";
-import { isValidObjectId } from "mongoose";
 import { NextResponse, NextRequest } from "next/server";
 
 connectDB();
