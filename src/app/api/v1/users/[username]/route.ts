@@ -5,19 +5,33 @@ import { NextResponse, NextRequest } from "next/server";
 
 connectDB();
 
-export async function GET(request: NextRequest, { params }: { params: { username: string } }) {
+export async function GET(
+    request: NextRequest,
+    { params }: { params: { username: string } }
+) {
     try {
         const { username } = params;
 
-        if (!(username?.trim()))
-            return NextResponse.json({ error: "username is empty or invalid" }, { status: 400 })
+        if (!username?.trim())
+            return NextResponse.json(
+                { error: "username is empty or invalid" },
+                { status: 400 }
+            );
 
-        const user = await User.findOne({ username }).select("-password -refreshToken");
+        const user = await User.findOne({ username }).select(
+            "-password -refreshToken"
+        );
 
         if (!user)
-            return NextResponse.json({ error: "User does not exist" }, { status: 404 })
+            return NextResponse.json(
+                { error: "User does not exist" },
+                { status: 404 }
+            );
 
-        return NextResponse.json(new SuccessBody(true, "User fetched successfully", user), { status: 200 })
+        return NextResponse.json(
+            new SuccessBody(true, "User fetched successfully", user),
+            { status: 200 }
+        );
     } catch (error) {
         console.log(error);
     }
