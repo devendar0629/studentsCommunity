@@ -13,7 +13,9 @@ export default function RootLayout({
 }>) {
     return (
         <html className="dark" lang="en">
-            <body>{children}</body>
+            <body className="h-full w-full flex flex-col flex-nowrap">
+                {children}
+            </body>
         </html>
     );
 }

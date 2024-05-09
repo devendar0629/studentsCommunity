@@ -4,7 +4,6 @@ const userSchema = new mongoose.Schema(
     {
         name: {
             type: String,
-            required: [true, "Name is required"],
         },
         username: {
             type: String,
@@ -14,6 +13,7 @@ const userSchema = new mongoose.Schema(
         email: {
             type: String,
             required: [true, "Email cannot be empty"],
+            unique: [true,"Email must be unique"],
         },
         password: {
             type: String,
@@ -35,7 +35,6 @@ const userSchema = new mongoose.Schema(
         gender: {
             type: String,
             enum: ["MALE", "FEMALE", "RATHER-NOT-SAY"],
-            required: [true, "Gender cannot be empty"],
         },
         joinedGroups: [
             {

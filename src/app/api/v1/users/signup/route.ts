@@ -8,37 +8,31 @@ import { SuccessBody } from "@/utils/Response/SuccessBody";
 connectDB();
 
 export interface UserInterface {
-    name: string;
     username: string;
     email: string;
     password: string;
-    gender: "MALE" | "FEMALE" | "RATHER-NOT-SAY";
+    confirmPassword: string;
 }
 
 export async function POST(request: NextRequest) {
     try {
-        let { name, username, email, password, gender }: UserInterface =
+        let { username, email, password, confirmPassword }: UserInterface =
             await request.json();
-        username = username.trim();
-        email = email.trim();
+        username = username?.trim();
+        email = email?.trim();
 
-        if ([username, email, password, name, gender].some((val) => !val)) {
+        if ([username, email, password].some((val) => !val)) {
             return NextResponse.json(
                 {
-                    error: "Username or password or email or gender cannot be empty",
+                    error: "Username or password or email cannot be empty",
                 },
                 { status: 400 }
             );
         }
 
-        if (
-            gender !== "MALE" &&
-            gender !== "FEMALE" &&
-            gender !== "RATHER-NOT-SAY"
-        )
-            return NextResponse.json({
-                error: "Gender must be MALE or FEMALE or RATHER-NOT-SAY. Make sure you exactly match case and dashes",
-            });
+        if (password != confirmPassword) {
+            return NextResponse.json({ error: "Passwords don't match" }, { status: 400 })
+        }
 
         const userFind = await User.exists({ username });
 
@@ -53,11 +47,9 @@ export async function POST(request: NextRequest) {
         const hashedPassword = await bcryptjs.hash(password, salt);
 
         let newUser = new User({
-            name,
             email,
             username,
             password: hashedPassword,
-            gender,
         });
 
         // saved here to get the mongodb _id
