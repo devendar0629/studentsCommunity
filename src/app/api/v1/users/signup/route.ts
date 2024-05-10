@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
         username = username?.trim();
         email = email?.trim();
 
+        // field values validation
         if ([username, email, password].some((val) => !val)) {
             return NextResponse.json(
                 {
@@ -30,50 +31,85 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // check password match
         if (password != confirmPassword) {
             return NextResponse.json({ error: "Passwords don't match" }, { status: 400 })
         }
 
-        const userFind = await User.exists({ username });
+        const userFindByUsername: any = await User.findOne({ username });
+        const userFindByEmail: any = await User.findOne({ email });
 
-        if (userFind) {
-            return NextResponse.json(
-                { error: "User already exists" },
-                { status: 409 }
-            );
+        // Check if there exists a VERIFIED user with the same email or username
+        if (userFindByEmail?.isVerified || userFindByUsername?.isVerified) {
+            if (userFindByEmail?.email === email || userFindByUsername?.email === email) {
+                return NextResponse.json({ message: "Email is already taken" }, { status: 400 })
+            } else if (userFindByEmail?.username === username || userFindByUsername?.username === username) {
+                return NextResponse.json({ message: "Username is already taken" }, { status: 400 })
+            }
         }
 
-        const salt = await bcryptjs.genSalt(10);
-        const hashedPassword = await bcryptjs.hash(password, salt);
+        let currentUser = null;
+        let statusFlag: 'ExistingUser' | 'NewUser' | null = null
 
-        let newUser = new User({
-            email,
-            username,
-            password: hashedPassword,
-        });
+        // There was an unverified user
+        if (userFindByEmail || userFindByUsername) {
+            // hash password
+            const salt = await bcryptjs.genSalt(10);
+            const hashedPassword = await bcryptjs.hash(password, salt);
 
-        // saved here to get the mongodb _id
-        const savedUser = await newUser.save();
+            // update password
+            userFindByEmail.password = hashedPassword;
+            await userFindByEmail.save();
 
-        const hashedToken = await bcryptjs.hash(savedUser?._id.toString(), 10);
-        newUser.verifyToken = hashedToken;
-        newUser.verifyTokenExpiry = Date.now() + 3600000;
+            currentUser = userFindByEmail;
+            statusFlag = 'ExistingUser'
+        }
+        // No user exists
+        else if (!userFindByEmail && !userFindByUsername) {
+            const salt = await bcryptjs.genSalt(10);
+            const hashedPassword = await bcryptjs.hash(password, salt);
 
-        await newUser.save();
+            let newUser = new User({
+                email,
+                username,
+                password: hashedPassword,
+            });
 
+            currentUser = await newUser.save();
+            statusFlag = 'NewUser'
+        }
+
+        // generate verify token and save in db
+        const hashedToken = await bcryptjs.hash(currentUser?._id.toString(), 10);
+        currentUser.verifyToken = hashedToken;
+        currentUser.verifyTokenExpiry = Date.now() + 3600000;
+
+        await currentUser.save();
+
+        // send activation link to user
         const mail = await sendMail(
             "VERIFY_EMAIL",
             email,
-            savedUser?._id.toString(),
+            currentUser?._id?.toString(),
             hashedToken
         );
 
-        // // CAUTION: Remove the password from response
+        const userResponse = await User.findOne({
+            _id: currentUser._id
+        }).select('-password -verifyToken -verifyTokenExpiry')
+
         return NextResponse.json(
-            new SuccessBody(true, "User created successfully.", newUser),
+            new SuccessBody(
+                true,
+                `User ${statusFlag === 'ExistingUser' ? 'updated' : 'created'} successfully.`,
+                userResponse
+            ),
             { status: 201 }
         );
     } catch (error: any) {
         console.log(error.message);
+        return NextResponse.json({
+            error: "Something went wrong while signing up"
+        }, { status: 500 })
     }
 }
