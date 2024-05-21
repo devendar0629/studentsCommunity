@@ -19,7 +19,7 @@ const sendMail = async (
         });
 
         const mailOptions = {
-            from: "hello@demomailtrap.com", // CAUTION: What is this ???
+            from: "mailtrap@demomailtrap.com", // CAUTION: What is this ???
             to: toEmail,
             subject:
                 emailType === "VERIFY_EMAIL"

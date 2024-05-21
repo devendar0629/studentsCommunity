@@ -5,11 +5,11 @@ import { poppins } from "../ui/fonts";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
-import Success from "./success";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { Separator } from "@/components/ui/separator";
-import Lock from "../../../public/lock.svg";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import VerifyEmail from "./verifyemail";
 
 interface Inputs {
     username: string;
@@ -21,8 +21,8 @@ interface Inputs {
 function Signup() {
     const router = useRouter();
     const [error, setError] = useState("");
-    const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
 
     const {
         register,
@@ -33,28 +33,31 @@ function Signup() {
     } = useForm<Inputs>();
 
     const handleSignup: SubmitHandler<Inputs> = async (data) => {
+        if (data.password !== data.confirmPassword) {
+            setError("Passwords don't match");
+            return;
+        }
         try {
             setLoading(true);
             const response = await axios.post("/api/v1/users/signup", data);
-            console.log(response);
+            setLoading(false);
 
             if (!response) throw new Error("Error while sign up");
 
             if (response.status === 409) {
-                setError("username is taken");
+                setError("username is already taken.");
             } else if (response.status === 201) {
                 setError("");
                 setSuccess(true);
             }
-            setLoading(false);
         } catch (error: any) {
             setError(error?.response?.data?.error);
             setLoading(false);
-            console.log(error?.response?.data?.error);
         }
     };
 
     useEffect(() => {
+        // Maybe the user has started to rectify the error
         if (error) setError("");
     }, [
         watch("email"),
@@ -65,26 +68,22 @@ function Signup() {
 
     return (
         <>
-            <main className="h-screen w-screen flex flex-col flex-nowrap justify-center items-center">
-                {success ? (
-                    <Success
-                        email={getFieldValues("email")}
-                        username={getFieldValues("username")}
-                    />
-                ) : (
+            {!success ? (
+                <main className="h-screen w-screen flex flex-col flex-nowrap justify-center items-center">
                     <div className="bg-[#3b425b] my-4 lg:my-0 lg:mb-5 rounded-lg lg:gap-6 lg:justify-center flex w-[74%] mx-auto flex-col-reverse lg:flex-row flex-nowrap py-6 lg:py-10 lg:px-8">
                         {/* Form */}
                         <div
                             className={`${poppins.className} w-[87.5%] lg:w-[75%] font-semibold items-center gap-4 mx-auto justify-center flex flex-col h-full`}
                         >
-                            <h2 className="text-[2.5rem]">Create Account</h2>
+                            <h2 className="lg:text-[2.5rem] text-3xl whitespace-nowrap">
+                                Create Account
+                            </h2>
                             <form
                                 className="w-full mt-5 flex flex-col flex-nowrap gap-5 justify-center"
                                 onSubmit={handleSubmit(handleSignup)}
                             >
                                 <section className="flex relative flex-row-reverse flex-nowrap items-center">
                                     <Input
-                                        items-center
                                         className="py-5 pl-[3.25rem] font-medium dark:placeholder:text-[#ccc]"
                                         {...register("username")}
                                         placeholder="Username"
@@ -111,25 +110,25 @@ function Signup() {
                                         type="email"
                                     />
                                     <svg
-                                        width="1.85rem"
+                                        width="1.7rem"
                                         height="40px"
-                                        className="absolute left-[0.55rem]"
                                         viewBox="0 0 24 24"
+                                        className="absolute left-[0.55rem]"
                                         fill="none"
                                         xmlns="http://www.w3.org/2000/svg"
                                     >
                                         <path
-                                            fillRule="evenodd"
-                                            clipRule="evenodd"
-                                            d="M3.75 5.25L3 6V18L3.75 18.75H20.25L21 18V6L20.25 5.25H3.75ZM4.5 7.6955V17.25H19.5V7.69525L11.9999 14.5136L4.5 7.6955ZM18.3099 6.75H5.68986L11.9999 12.4864L18.3099 6.75Z"
-                                            fill="#080341"
+                                            d="M3 8L8.44992 11.6333C9.73295 12.4886 10.3745 12.9163 11.0678 13.0825C11.6806 13.2293 12.3194 13.2293 12.9322 13.0825C13.6255 12.9163 14.2671 12.4886 15.5501 11.6333L21 8M6.2 19H17.8C18.9201 19 19.4802 19 19.908 18.782C20.2843 18.5903 20.5903 18.2843 20.782 17.908C21 17.4802 21 16.9201 21 15.8V8.2C21 7.0799 21 6.51984 20.782 6.09202C20.5903 5.71569 20.2843 5.40973 19.908 5.21799C19.4802 5 18.9201 5 17.8 5H6.2C5.0799 5 4.51984 5 4.09202 5.21799C3.71569 5.40973 3.40973 5.71569 3.21799 6.09202C3 6.51984 3 7.07989 3 8.2V15.8C3 16.9201 3 17.4802 3.21799 17.908C3.40973 18.2843 3.71569 18.5903 4.09202 18.782C4.51984 19 5.07989 19 6.2 19Z"
+                                            stroke="#000000"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
                                         />
                                     </svg>
                                 </section>
 
                                 <section className="flex flex-row-reverse flex-nowrap relative items-center">
                                     <Input
-                                        items-center
                                         className="py-5 pl-[3.25rem] font-medium dark:placeholder:text-[#ccc]"
                                         {...register("password")}
                                         placeholder="Password"
@@ -196,14 +195,10 @@ function Signup() {
                                 <p className="font-light">
                                     Have an account ?
                                     <Button
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            return router.push("/login");
-                                        }}
                                         className="px-3 hover:text-blue-400 transition-colors duration-75 py-1 text-[.925rem] text-white"
                                         variant={"link"}
                                     >
-                                        Login
+                                        <Link href={"/login"}>Login</Link>
                                     </Button>
                                 </p>
                             </form>
@@ -223,8 +218,10 @@ function Signup() {
                             />
                         </div>
                     </div>
-                )}
-            </main>
+                </main>
+            ) : (
+                <VerifyEmail />
+            )}
         </>
     );
 }

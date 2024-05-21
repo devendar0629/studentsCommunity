@@ -8,13 +8,13 @@ export async function middleware(request: NextRequest) {
     try {
         const accessToken = request.cookies.get("accessToken")?.value;
 
-        const publicUrlRegex = /^\/api\/v1\/users\/(login|signup|verifyEmail)$/;
+        const publicUrlRegex: RegExp = /^\/api\/v1\/users\/(login|signup|verifyemail)$/;
         const isPublicUrl = publicUrlRegex.test(request.nextUrl.pathname);
 
         if (isPublicUrl && accessToken) {
-            return NextResponse.redirect(new URL("/dashboard", request.url));
+            return NextResponse.json({ error: "User already logged in" }, { status: 200 })
         } else if (!isPublicUrl && !accessToken) {
-            return NextResponse.redirect(new URL("/login", request.url));
+            return NextResponse.json({ error: "Unauthenticated request" }, { status: 401 })
         }
 
         return NextResponse.next();

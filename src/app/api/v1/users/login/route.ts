@@ -4,7 +4,6 @@ import bcryptjs from "bcryptjs";
 import User from "@/models/user.model";
 import { SuccessBody } from "@/utils/Response/SuccessBody";
 import { connectDB } from "@/dbconfig/connectDB";
-import { UserInterface } from "../signup/route";
 
 connectDB();
 
@@ -35,15 +34,20 @@ function convertTimeStringToMilliseconds(timeString: string) {
     return parseInt(value, 10) * millisecondsPerUnit[unit];
 }
 
+interface UserInterface {
+    email: string;
+    password: string;
+    username_or_email: string;
+}
+
 export async function POST(request: NextRequest) {
     try {
-        let { email, username, password }: UserInterface = await request.json();
-        email = email?.trim();
-        username = username?.trim();
+        let { username_or_email, password }: UserInterface = await request.json();
+        username_or_email = username_or_email?.trim();
 
-        if (!email && !username) {
+        if (!username_or_email) {
             return NextResponse.json(
-                { error: "Either username or password is required" },
+                { error: "Username or email is required" },
                 { status: 400 }
             );
         }
@@ -56,14 +60,15 @@ export async function POST(request: NextRequest) {
         }
 
         let user = await User.findOne({
-            $or: [{ username }, { email }],
+            $or: [{ username: username_or_email }, { email: username_or_email }],
         });
 
-        if (!user)
+        if (!user) {
             return NextResponse.json(
-                { error: "User not found" },
+                { error: "Unrecognized credentials" },
                 { status: 404 }
             );
+        };
         if (user.isVerified === false) {
             return NextResponse.json(
                 { error: "User email is not verified" },
@@ -79,11 +84,6 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
 
-        // CAUTION: Remove password from the response
-        const response = NextResponse.json(
-            new SuccessBody(true, "User logged in successfully", user)
-        );
-
         const accessTokenPayload = {
             id: user._id,
             username: user.username,
@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
             id: user._id,
         };
 
+        // generate jwt tokens
         const accessToken = jwt.sign(
             accessTokenPayload,
             process.env.ACCESS_TOKEN_SECRET!,
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest) {
             { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
         );
 
-        const resp = await User.findByIdAndUpdate(
+        user = await User.findByIdAndUpdate(
             user._id,
             {
                 $set: {
@@ -112,13 +113,25 @@ export async function POST(request: NextRequest) {
                 },
             },
             { new: true }
+        ).select('-password -accessToken -refreshToken');
+
+        if (!user) {
+            return NextResponse.json({ error: "Something went wrong while updating user tokens" }, { status: 500 })
+        }
+
+        const response = NextResponse.json(
+            new SuccessBody(true, "User logged in successfully", user), { status: 200 }
         );
 
+        // send cookies
         response.cookies.set("accessToken", accessToken, {
             httpOnly: true,
             secure: true,
-            maxAge:
-                Date.now() +
+            maxAge: Date.now() +
+                convertTimeStringToMilliseconds(
+                    String(process.env.ACCESS_TOKEN_EXPIRY)
+                ),
+            expires: Date.now() +
                 convertTimeStringToMilliseconds(
                     String(process.env.ACCESS_TOKEN_EXPIRY)
                 ),
@@ -130,6 +143,10 @@ export async function POST(request: NextRequest) {
                 Date.now() +
                 convertTimeStringToMilliseconds(
                     String(process.env.REFRESH_TOKEN_EXPIRY)
+                ),
+            expires: Date.now() +
+                convertTimeStringToMilliseconds(
+                    String(process.env.ACCESS_TOKEN_EXPIRY)
                 ),
         });
 

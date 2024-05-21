@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
     title: "Students community",
@@ -15,6 +16,7 @@ export default function RootLayout({
         <html className="dark" lang="en">
             <body className="h-full w-full flex flex-col flex-nowrap">
                 {children}
+                <Toaster />
             </body>
         </html>
     );
