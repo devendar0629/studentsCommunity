@@ -9,55 +9,47 @@ import axios from "axios";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Loader from "@/components/custom/Loader";
 
-interface Inputs {
+interface FormInputs {
     username_or_email: string;
     password: string;
 }
 
 function Login() {
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
-
     const router = useRouter();
 
     const {
         register,
         handleSubmit,
-        watch,
-        getValues: getFieldValues,
-        formState: { errors },
-    } = useForm<Inputs>();
+        setError,
+        formState: { errors, isSubmitting },
+    } = useForm<FormInputs>();
 
-    const handleLogin: SubmitHandler<Inputs> = async (data) => {
+    const handleLogin: SubmitHandler<FormInputs> = async (data) => {
         try {
-            setLoading(true);
             const response = await axios.post("/api/v1/users/login", data);
-            setLoading(false);
 
             if (!response) throw new Error("Error while login");
 
             if (response.status === 404) {
-                setError("Invalid username");
+                setError("username_or_email", {
+                    message: "User not found",
+                });
             } else if (response.status !== 200) {
-                setError(response.statusText);
+                setError("root", {
+                    message: response.statusText,
+                });
             } else {
                 router.push("/dashboard");
             }
         } catch (error: any) {
-            setError(error?.response?.data?.error);
-            setLoading(false);
+            setError("root", {
+                message: error?.response?.data?.error,
+            });
             console.log(error?.response?.data?.error);
         }
     };
-
-    // redirect user, if he is already logged in
-    useEffect(() => {}, []);
-
-    useEffect(() => {
-        // Maybe the user has started to rectify the error
-        if (error) setError("");
-    }, [watch("username_or_email"), watch("password")]);
 
     return (
         <>
@@ -77,9 +69,14 @@ function Login() {
                             <section className="flex relative flex-row-reverse flex-nowrap items-center">
                                 <Input
                                     className="py-5 pl-[3.25rem] font-medium dark:placeholder:text-[#ccc]"
-                                    {...register("username_or_email")}
+                                    {...register("username_or_email", {
+                                        required: {
+                                            value: true,
+                                            message:
+                                                "Username or email is required",
+                                        },
+                                    })}
                                     placeholder="Email or username"
-                                    required={true}
                                     type="text"
                                 />
                                 <svg
@@ -93,12 +90,26 @@ function Login() {
                                     <path d="M12,1a11,11,0,0,0,0,22,1,1,0,0,0,0-2,9,9,0,1,1,9-9v2.857a1.857,1.857,0,0,1-3.714,0V7.714a1,1,0,1,0-2,0v.179A5.234,5.234,0,0,0,12,6.714a5.286,5.286,0,1,0,3.465,9.245A3.847,3.847,0,0,0,23,14.857V12A11.013,11.013,0,0,0,12,1Zm0,14.286A3.286,3.286,0,1,1,15.286,12,3.29,3.29,0,0,1,12,15.286Z" />
                                 </svg>
                             </section>
+                            {errors.username_or_email && (
+                                <div className="text-red-400 text-sm font-light text-center">
+                                    {errors.username_or_email.message}
+                                </div>
+                            )}
 
                             <section className="flex flex-row-reverse flex-nowrap relative items-center">
                                 <Input
                                     className="py-5 pl-[3.25rem] font-medium dark:placeholder:text-[#ccc]"
-                                    {...register("password")}
-                                    required={true}
+                                    {...register("password", {
+                                        minLength: {
+                                            value: 6,
+                                            message:
+                                                "Password should contain atleast 6 characters",
+                                        },
+                                        required: {
+                                            value: true,
+                                            message: "Password is required",
+                                        },
+                                    })}
                                     placeholder="Password"
                                     type="password"
                                 />
@@ -120,19 +131,27 @@ function Login() {
                                 </svg>
                             </section>
 
-                            {error && (
-                                <p className="text-red-400 font-light text-center text-sm">
-                                    {error}
-                                </p>
+                            {errors.password && (
+                                <div className="text-red-400 text-sm font-light text-center">
+                                    {errors.password.message}
+                                </div>
                             )}
 
                             <Button
-                                className={`py-5 pt-[1.270rem] ${loading ? "opacity-40" : "opacity-100"}`}
+                                className={`py-5 pt-[1.270rem] ${isSubmitting ? "opacity-40" : "opacity-100"}`}
                                 type="submit"
                                 variant={"secondary"}
                             >
-                                Login
+                                {!isSubmitting ? "Login" : <Loader />}
                             </Button>
+
+                            {errors.root && (
+                                <div className="text-red-400 text-sm font-light text-center">
+                                    {errors.root.message ??
+                                        "Network connection error"}
+                                </div>
+                            )}
+
                             <p className="font-light">
                                 New to Students Community ?
                                 <Button

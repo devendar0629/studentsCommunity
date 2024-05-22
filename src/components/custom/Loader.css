@@ -1,0 +1,38 @@
+.load {
+  height: 9px;
+  width: 9px;
+  display: block;
+  background-color: pink;
+  border-radius: 50%;
+  animation-name: blink;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+  animation-duration: 1s;
+}
+
+.two {
+  animation-delay: 100ms;
+}
+
+.three {
+  animation-delay: 200ms;
+}
+
+@keyframes blink {
+  0% {
+    width: 9px;
+    height: 9px;
+  }
+  55% {
+    width: 0px;
+    height: 0px;
+  }
+  63% {
+    width: 0px;
+    height: 0px;
+  }
+  100% {
+    width: 9px;
+    height: 9px;
+  }
+}

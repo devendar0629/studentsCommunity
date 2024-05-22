@@ -10,8 +10,9 @@ import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import VerifyEmail from "./verifyemail";
+import Loader from "@/components/custom/Loader";
 
-interface Inputs {
+interface FormInputs {
     username: string;
     email: string;
     password: string;
@@ -20,51 +21,41 @@ interface Inputs {
 
 function Signup() {
     const router = useRouter();
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
 
     const {
         register,
         handleSubmit,
         watch,
-        getValues: getFieldValues,
-        formState: { errors },
-    } = useForm<Inputs>();
+        setError,
+        formState: { errors, isSubmitting, isSubmitSuccessful },
+    } = useForm<FormInputs>();
 
-    const handleSignup: SubmitHandler<Inputs> = async (data) => {
+    const handleSignup: SubmitHandler<FormInputs> = async (data) => {
         if (data.password !== data.confirmPassword) {
-            setError("Passwords don't match");
+            setError("confirmPassword", {
+                message: "Passwords don't match",
+            });
             return;
         }
         try {
-            setLoading(true);
             const response = await axios.post("/api/v1/users/signup", data);
-            setLoading(false);
 
             if (!response) throw new Error("Error while sign up");
 
             if (response.status === 409) {
-                setError("username is already taken.");
+                setError("username", {
+                    message: "Username already taken",
+                });
             } else if (response.status === 201) {
-                setError("");
                 setSuccess(true);
             }
         } catch (error: any) {
-            setError(error?.response?.data?.error);
-            setLoading(false);
+            setError("root", {
+                message: error.message,
+            });
         }
     };
-
-    useEffect(() => {
-        // Maybe the user has started to rectify the error
-        if (error) setError("");
-    }, [
-        watch("email"),
-        watch("password"),
-        watch("confirmPassword"),
-        watch("username"),
-    ]);
 
     return (
         <>
@@ -73,7 +64,7 @@ function Signup() {
                     <div className="bg-[#3b425b] my-4 lg:my-0 lg:mb-5 rounded-lg lg:gap-6 lg:justify-center flex w-[74%] mx-auto flex-col-reverse lg:flex-row flex-nowrap py-6 lg:py-10 lg:px-8">
                         {/* Form */}
                         <div
-                            className={`${poppins.className} w-[87.5%] lg:w-[75%] font-semibold items-center gap-4 mx-auto justify-center flex flex-col h-full`}
+                            className={`${poppins} w-[87.5%] lg:w-[75%] font-semibold items-center gap-4 mx-auto justify-center flex flex-col h-full`}
                         >
                             <h2 className="lg:text-[2.5rem] text-3xl whitespace-nowrap">
                                 Create Account
@@ -85,9 +76,13 @@ function Signup() {
                                 <section className="flex relative flex-row-reverse flex-nowrap items-center">
                                     <Input
                                         className="py-5 pl-[3.25rem] font-medium dark:placeholder:text-[#ccc]"
-                                        {...register("username")}
+                                        {...register("username", {
+                                            required: {
+                                                value: true,
+                                                message: "Username is required",
+                                            },
+                                        })}
                                         placeholder="Username"
-                                        required={true}
                                         type="text"
                                     />
                                     <svg
@@ -101,12 +96,27 @@ function Signup() {
                                         <path d="M12,1a11,11,0,0,0,0,22,1,1,0,0,0,0-2,9,9,0,1,1,9-9v2.857a1.857,1.857,0,0,1-3.714,0V7.714a1,1,0,1,0-2,0v.179A5.234,5.234,0,0,0,12,6.714a5.286,5.286,0,1,0,3.465,9.245A3.847,3.847,0,0,0,23,14.857V12A11.013,11.013,0,0,0,12,1Zm0,14.286A3.286,3.286,0,1,1,15.286,12,3.29,3.29,0,0,1,12,15.286Z" />
                                     </svg>
                                 </section>
+
+                                {errors.username && (
+                                    <p className="text-red-400 text-sm font-light text-center">
+                                        {errors.username.message}
+                                    </p>
+                                )}
+
                                 <section className="flex relative flex-row-reverse flex-nowrap">
                                     <Input
                                         className="py-5 pl-[3.25rem] font-medium dark:placeholder:text-[#ccc]"
-                                        {...register("email")}
+                                        {...register("email", {
+                                            required: {
+                                                value: true,
+                                                message: "Email is required",
+                                            },
+                                            pattern: {
+                                                value: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
+                                                message: "Invalid email",
+                                            },
+                                        })}
                                         placeholder="Email"
-                                        required={true}
                                         type="email"
                                     />
                                     <svg
@@ -127,12 +137,27 @@ function Signup() {
                                     </svg>
                                 </section>
 
+                                {errors.email && (
+                                    <p className="text-red-400 text-sm font-light text-center">
+                                        {errors.email.message}
+                                    </p>
+                                )}
+
                                 <section className="flex flex-row-reverse flex-nowrap relative items-center">
                                     <Input
                                         className="py-5 pl-[3.25rem] font-medium dark:placeholder:text-[#ccc]"
-                                        {...register("password")}
+                                        {...register("password", {
+                                            required: {
+                                                value: true,
+                                                message: "Password is required",
+                                            },
+                                            minLength: {
+                                                value: 6,
+                                                message:
+                                                    "Password should contain minimum of 6 characters",
+                                            },
+                                        })}
                                         placeholder="Password"
-                                        required={true}
                                         type="password"
                                     />
                                     <svg
@@ -153,11 +178,26 @@ function Signup() {
                                     </svg>
                                 </section>
 
+                                {errors.password && (
+                                    <p className="text-red-400 text-sm font-light text-center">
+                                        {errors.password.message}
+                                    </p>
+                                )}
+
                                 <section className="flex flex-row-reverse flex-nowrap relative items-center">
                                     <Input
                                         className="py-5 pl-[3.25rem] font-medium dark:placeholder:text-[#ccc]"
-                                        {...register("confirmPassword")}
-                                        required={true}
+                                        {...register("confirmPassword", {
+                                            required: {
+                                                value: true,
+                                                message: "Password is required",
+                                            },
+                                            minLength: {
+                                                value: 6,
+                                                message:
+                                                    "Password should contain minimum of 6 characters",
+                                            },
+                                        })}
                                         placeholder="Confirm Password"
                                         type="password"
                                     />
@@ -179,19 +219,30 @@ function Signup() {
                                     </svg>
                                 </section>
 
-                                {error && (
-                                    <p className="text-red-400 font-light text-center text-sm">
-                                        {error}
+                                {errors.confirmPassword && (
+                                    <p className="text-red-400 text-sm font-light text-center">
+                                        {errors.confirmPassword.message}
                                     </p>
                                 )}
 
                                 <Button
-                                    className={`py-5 pt-[1.270rem] ${loading ? "opacity-40" : "opacity-100"}`}
+                                    className={`py-5 pt-[1.270rem] ${isSubmitting ? "opacity-40" : "opacity-100"}`}
                                     type="submit"
                                     variant={"secondary"}
                                 >
-                                    Signup
+                                    {!isSubmitting ? (
+                                        "Signup"
+                                    ) : (
+                                        <Loader classname="gap-0.5" />
+                                    )}
                                 </Button>
+
+                                {errors.root && (
+                                    <p className="text-red-400 text-sm font-light text-center">
+                                        {errors.root.message}
+                                    </p>
+                                )}
+
                                 <p className="font-light">
                                     Have an account ?
                                     <Button
