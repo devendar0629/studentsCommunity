@@ -4,10 +4,13 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { useAppDispatch } from "@/redux/hooks/hooks";
+import { logout } from "@/redux/features/auth/authSlice";
 
 function Dashboard() {
     const router = useRouter();
     const { toast } = useToast();
+    const appDispatch = useAppDispatch();
 
     const handleLogout = async (): Promise<void> => {
         try {
@@ -20,7 +23,7 @@ function Dashboard() {
                 });
             }
 
-            router.refresh();
+            appDispatch(logout());
         } catch (error: any) {
             console.log(error.message);
         }

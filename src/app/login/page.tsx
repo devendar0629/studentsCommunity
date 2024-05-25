@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { poppins } from "../ui/fonts";
+import React from "react";
+import { poppins, ubuntu } from "../ui/fonts";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -9,7 +9,9 @@ import axios from "axios";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Loader from "@/components/custom/Loader";
+import Loader from "@/components/custom/Loader/Loader";
+import { useAppSelector, useAppDispatch } from "@/redux/hooks/hooks";
+import { login } from "@/redux/features/auth/authSlice";
 
 interface FormInputs {
     username_or_email: string;
@@ -18,6 +20,7 @@ interface FormInputs {
 
 function Login() {
     const router = useRouter();
+    const appDispatch = useAppDispatch();
 
     const {
         register,
@@ -41,6 +44,7 @@ function Login() {
                     message: response.statusText,
                 });
             } else {
+                appDispatch(login());
                 router.push("/dashboard");
             }
         } catch (error: any) {
@@ -91,7 +95,7 @@ function Login() {
                                 </svg>
                             </section>
                             {errors.username_or_email && (
-                                <div className="text-red-400 text-sm font-light text-center">
+                                <div className="text-red-300 text-sm font-light text-center">
                                     {errors.username_or_email.message}
                                 </div>
                             )}
@@ -132,7 +136,7 @@ function Login() {
                             </section>
 
                             {errors.password && (
-                                <div className="text-red-400 text-sm font-light text-center">
+                                <div className="text-red-300 text-sm font-light text-center">
                                     {errors.password.message}
                                 </div>
                             )}
@@ -146,7 +150,7 @@ function Login() {
                             </Button>
 
                             {errors.root && (
-                                <div className="text-red-400 text-sm font-light text-center">
+                                <div className="text-red-300 text-sm font-light text-center">
                                     {errors.root.message ??
                                         "Network connection error"}
                                 </div>

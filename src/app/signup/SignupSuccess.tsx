@@ -2,7 +2,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import React from "react";
 import { poppins } from "../ui/fonts";
 
-function VerifyEmail() {
+function SignupSuccess() {
     return (
         <>
             <main className="h-screen flex flex-col flex-nowrap justify-center items-center">
@@ -26,7 +26,7 @@ function VerifyEmail() {
                             />
                         </svg>
                     </section>
-                    <CardTitle className="lg:text-[2.95rem] text-[1.6rem] lg:font-semibold">
+                    <CardTitle className="lg:text-[2.95rem] pb-4 text-[1.6rem] lg:font-semibold">
                         Verify your Email
                     </CardTitle>
 
@@ -49,4 +49,4 @@ function VerifyEmail() {
     );
 }
 
-export default VerifyEmail;
+export default SignupSuccess;

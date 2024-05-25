@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 // CAUTION: This not an full fledged Route Protection system .
 export async function middleware(request: NextRequest) {
     console.log(
-        ` \x1b[36mSERVER -> ${request.method}\x1b[0m @ ${request.nextUrl.pathname}`
+        `\n ${((new Date(Date.now())).toTimeString()).slice(0, 8)} | \x1b[36mSERVER -> ${request.method}\x1b[0m @ ${request.nextUrl.pathname}\n`
     );
     try {
         const accessToken = request.cookies.get("accessToken")?.value;

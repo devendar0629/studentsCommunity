@@ -22,10 +22,10 @@ export async function POST(request: NextRequest) {
         email = email?.trim();
 
         // field values validation
-        if ([username, email, password].some((val) => !val)) {
+        if ([username, confirmPassword, email, password].some((val) => !val)) {
             return NextResponse.json(
                 {
-                    error: "Username or password or email cannot be empty",
+                    error: "Username or password or email or confirmPassword cannot be empty",
                 },
                 { status: 400 }
             );
@@ -41,10 +41,11 @@ export async function POST(request: NextRequest) {
 
         // Check if there exists a VERIFIED user with the same email or username
         if (userFindByEmail?.isVerified || userFindByUsername?.isVerified) {
-            if (userFindByEmail?.email === email || userFindByUsername?.email === email) {
-                return NextResponse.json({ message: "Email is already taken" }, { status: 400 })
-            } else if (userFindByEmail?.username === username || userFindByUsername?.username === username) {
+            if (userFindByEmail?.username === username || userFindByUsername?.username === username) {
                 return NextResponse.json({ message: "Username is already taken" }, { status: 400 })
+            }
+            else if (userFindByEmail?.email === email || userFindByUsername?.email === email) {
+                return NextResponse.json({ message: "Email is already taken" }, { status: 400 })
             }
         }
 
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
             { status: 201 }
         );
     } catch (error: any) {
-        console.log(error.message);
+        console.log(error);
         return NextResponse.json({
             error: "Something went wrong while signing up"
         }, { status: 500 })

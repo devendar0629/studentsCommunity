@@ -6,7 +6,6 @@ connectDB();
 
 export async function POST(request: NextRequest) {
     try {
-        const req = await request.json();
         const { searchParams } = new URL(request.url);
         const token = searchParams.get("token");
 

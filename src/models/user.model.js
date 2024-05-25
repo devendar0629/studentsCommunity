@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema(
         password: {
             type: String,
             required: [true, "Password cannot be empty"],
-            minLength: 6,
+            minLength: [6,"Password should contain atleast contain 6 characters"],
         },
         avatar: {
             type: String, // cloudinary url
@@ -44,11 +44,6 @@ const userSchema = new mongoose.Schema(
         ],
         age: Number,
         dateOfBirth: Date,
-        forgotPasswordToken: String,
-        forgotPasswordTokenExpiry: Date,
-        verifyToken: String,
-        verifyTokenExpiry: Date,
-        refreshToken: String,
     },
     { timestamps: true }
 );
