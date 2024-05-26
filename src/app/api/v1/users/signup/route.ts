@@ -4,6 +4,7 @@ import User from "@/models/user.model";
 import bcryptjs from "bcryptjs";
 import { sendMail } from "@/utils/mailService";
 import { SuccessBody } from "@/utils/Response/SuccessBody";
+import Token from '@/models/token.model'
 
 connectDB();
 
@@ -59,10 +60,18 @@ export async function POST(request: NextRequest) {
             const hashedPassword = await bcryptjs.hash(password, salt);
 
             // update password
-            userFindByEmail.password = hashedPassword;
-            await userFindByEmail.save();
+            if (userFindByEmail) {
+                userFindByEmail.username = username;
+                userFindByEmail.password = hashedPassword;
+                await userFindByEmail.save();
+            }
+            else {
+                userFindByUsername.email = email;
+                userFindByUsername.password = hashedPassword;
+                await userFindByUsername.save();
+            }
 
-            currentUser = userFindByEmail;
+            currentUser = userFindByEmail ?? userFindByUsername;
             statusFlag = 'ExistingUser'
         }
         // No user exists
@@ -81,23 +90,31 @@ export async function POST(request: NextRequest) {
         }
 
         // generate verify token and save in db
+        // if new user create a new token, or retrieve the existing one
+        let tokenInstance = await Token.findOne({
+            user: currentUser._id
+        }) ?? new Token();
+
+        tokenInstance.user = currentUser?._id;
+
         const hashedToken = await bcryptjs.hash(currentUser?._id.toString(), 10);
-        currentUser.verifyToken = hashedToken;
-        currentUser.verifyTokenExpiry = Date.now() + 3600000;
+        tokenInstance.verifyToken = hashedToken;
+        tokenInstance.verifyTokenExpiry = new Date(Date.now() + 3600000);
 
         await currentUser.save();
+        await tokenInstance.save();
 
         // send activation link to user
         const mail = await sendMail(
             "VERIFY_EMAIL",
-            email,
+            currentUser.email,
             currentUser?._id?.toString(),
             hashedToken
         );
 
         const userResponse = await User.findOne({
             _id: currentUser._id
-        }).select('-password -verifyToken -verifyTokenExpiry')
+        }).select('-password')
 
         return NextResponse.json(
             new SuccessBody(

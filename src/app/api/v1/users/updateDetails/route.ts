@@ -9,6 +9,19 @@ connectDB();
 
 export async function PATCH(request: NextRequest) {
     try {
+        const userId = getUserIdFromCookies(request);
+        if (!userId)
+            return NextResponse.json(
+                { message: "Unauthenticated request" },
+                { status: 401 }
+            );
+
+        if (!(await User.exists({ _id: userId })))
+            return NextResponse.json(
+                { error: "Invalid accessToken" },
+                { status: 401 }
+            );
+
         const searchParams = extractSearchParamsToObject(
             request.nextUrl.searchParams
         );
@@ -35,19 +48,6 @@ export async function PATCH(request: NextRequest) {
                     error: "Gender must be MALE or FEMALE or RATHER-NOT-SAY. Make sure you exactly match case and dashes",
                 },
                 { status: 400 }
-            );
-
-        const userId = getUserIdFromCookies(request);
-        if (!userId)
-            return NextResponse.json(
-                { message: "Unauthenticated request" },
-                { status: 401 }
-            );
-
-        if (!(await User.exists({ _id: userId })))
-            return NextResponse.json(
-                { error: "Invalid accessToken" },
-                { status: 401 }
             );
 
         const updatedUser = await User.findByIdAndUpdate(userId, searchParams, {

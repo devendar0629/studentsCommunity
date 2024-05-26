@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import User from "@/models/user.model";
 import { SuccessBody } from "@/utils/Response/SuccessBody";
+import Token from "@/models/token.model";
 
 export async function POST(request: NextRequest) {
     try {
@@ -18,15 +19,19 @@ export async function POST(request: NextRequest) {
             refreshToken,
             process.env.REFRESH_TOKEN_SECRET!
         );
-        const user = await User.findById(decodedToken.id).select("-password");
+        const userTokenInstance = await Token.findOne({
+            user: decodedToken.id
+        })
+        const user = await User.findById(userTokenInstance.user).select("-password");
 
-        if (!user) return NextResponse.json({ status: 401 });
-        if (user.refreshToken !== refreshToken)
+        if (!userTokenInstance) return NextResponse.json({ status: 401 });
+        if (userTokenInstance.refreshToken !== refreshToken)
             return NextResponse.json(
                 { error: "Unauthenticated request" },
                 { status: 401 }
             );
 
+        // payloads
         const accessTokenPayload = {
             id: user._id,
             username: user.username,
@@ -36,6 +41,7 @@ export async function POST(request: NextRequest) {
             id: user._id,
         };
 
+        // tokens
         const newAccessToken = jwt.sign(
             accessTokenPayload,
             process.env.ACCESS_TOKEN_SECRET!,
@@ -57,8 +63,8 @@ export async function POST(request: NextRequest) {
         resp.cookies.set("accessToken", newAccessToken);
         resp.cookies.set("refreshToken", newRefreshToken);
 
-        user.refreshToken = newRefreshToken;
-        await user.save();
+        userTokenInstance.refreshToken = newRefreshToken;
+        await userTokenInstance.save();
 
         return resp;
     } catch (error) {

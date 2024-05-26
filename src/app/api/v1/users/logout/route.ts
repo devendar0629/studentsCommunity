@@ -3,6 +3,7 @@ import { NextResponse, NextRequest } from "next/server";
 import User from "@/models/user.model";
 import jwt from "jsonwebtoken";
 import { connectDB } from "@/dbconfig/connectDB";
+import Token from "@/models/token.model";
 
 connectDB();
 
@@ -12,8 +13,8 @@ export async function POST(request: NextRequest) {
 
         if (!accessToken) {
             return NextResponse.json(
-                { error: "Invalid user" },
-                { status: 409 }
+                { error: "Unauthorized request" },
+                { status: 403 }
             );
         }
 
@@ -30,10 +31,12 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const user = await User.findById(decodedToken.id);
-        user.refreshToken = undefined;
+        const userTokenInstance = await Token.findOne({
+            user: decodedToken.id
+        })
+        userTokenInstance.refreshToken = undefined;
 
-        await user.save();
+        await userTokenInstance.save();
 
         const resp = NextResponse.json(
             new SuccessBody(true, "User logged out successfully"),

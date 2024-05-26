@@ -51,7 +51,6 @@ function Login() {
             setError("root", {
                 message: error?.response?.data?.error,
             });
-            console.log(error?.response?.data?.error);
         }
     };
 

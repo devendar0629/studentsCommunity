@@ -4,6 +4,8 @@ import bcryptjs from "bcryptjs";
 import User from "@/models/user.model";
 import { SuccessBody } from "@/utils/Response/SuccessBody";
 import { connectDB } from "@/dbconfig/connectDB";
+import Token from "@/models/token.model";
+import mongoose from "mongoose";
 
 connectDB();
 
@@ -93,6 +95,10 @@ export async function POST(request: NextRequest) {
             id: user._id,
         };
 
+        const tokenInstance = await Token.findOne({
+            user: user._id
+        });
+
         // generate jwt tokens
         const accessToken = jwt.sign(
             accessTokenPayload,
@@ -105,22 +111,13 @@ export async function POST(request: NextRequest) {
             { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
         );
 
-        user = await User.findByIdAndUpdate(
-            user._id,
-            {
-                $set: {
-                    refreshToken,
-                },
-            },
-            { new: true }
-        ).select('-password -accessToken -refreshToken');
+        tokenInstance.refreshToken = refreshToken
+        await tokenInstance.save();
 
-        if (!user) {
-            return NextResponse.json({ error: "Something went wrong while updating user tokens" }, { status: 500 })
-        }
+        const userData = await User.findById(user._id).select('-password')
 
         const response = NextResponse.json(
-            new SuccessBody(true, "User logged in successfully", user), { status: 200 }
+            new SuccessBody(true, "User logged in successfully", userData), { status: 200 }
         );
 
         // send cookies
