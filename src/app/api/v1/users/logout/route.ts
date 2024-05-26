@@ -1,6 +1,5 @@
 import { SuccessBody } from "@/utils/Response/SuccessBody";
 import { NextResponse, NextRequest } from "next/server";
-import User from "@/models/user.model";
 import jwt from "jsonwebtoken";
 import { connectDB } from "@/dbconfig/connectDB";
 import Token from "@/models/token.model";

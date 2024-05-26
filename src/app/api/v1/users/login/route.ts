@@ -5,7 +5,6 @@ import User from "@/models/user.model";
 import { SuccessBody } from "@/utils/Response/SuccessBody";
 import { connectDB } from "@/dbconfig/connectDB";
 import Token from "@/models/token.model";
-import mongoose from "mongoose";
 
 connectDB();
 
