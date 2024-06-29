@@ -1,11 +1,13 @@
-import React from "react";
+"use client";
+
+import withAuth from "@/components/auth/withAuth";
 
 function page() {
     return (
         <>
-            <div>page component</div>
+            <div>Noobj next component</div>
         </>
     );
 }
 
-export default page;
+export default withAuth(page);

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { poppins, ubuntu } from "../ui/fonts";
+import { poppins } from "../ui/fonts";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SubmitHandler, useForm } from "react-hook-form";

@@ -1,18 +1,17 @@
 "use client";
-import React from "react";
+
 import axios from "axios";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useAppDispatch } from "@/redux/hooks/hooks";
 import { logout } from "@/redux/features/auth/authSlice";
+import withAuth from "@/components/auth/withAuth";
 
 function Dashboard() {
-    const router = useRouter();
     const { toast } = useToast();
     const appDispatch = useAppDispatch();
 
-    const handleLogout = async (): Promise<void> => {
+    const handleLogout = async () => {
         try {
             const resp = await axios.post("/api/v1/users/logout");
             if (resp.status !== 200) {
@@ -40,4 +39,4 @@ function Dashboard() {
     );
 }
 
-export default Dashboard;
+export default withAuth(Dashboard);
