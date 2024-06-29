@@ -2,7 +2,7 @@
   height: 9px;
   width: 9px;
   display: block;
-  background-color: pink;
+  /* background-color: pink; */
   border-radius: 50%;
   animation-name: blink;
   animation-iteration-count: infinite;

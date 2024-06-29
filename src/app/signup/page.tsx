@@ -58,12 +58,12 @@ function Signup() {
                 setSuccess(true);
             } else {
                 setError("root", {
-                    message: response.data.message,
+                    message: response.data.error.message,
                 });
             }
         } catch (error: any) {
             setError("root", {
-                message: error?.response?.data?.message,
+                message: error?.response?.data?.error?.message,
             });
         }
     };
@@ -207,7 +207,7 @@ function Signup() {
                                     {!isSubmitting ? (
                                         "Signup"
                                     ) : (
-                                        <Loader classname="gap-0.5" />
+                                        <Loader circleClassname="bg-gray-300" />
                                     )}
                                 </button>
 

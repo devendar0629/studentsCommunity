@@ -2,23 +2,23 @@ import User from "@/models/user.model";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserIdFromCookies } from "@/utils/decodeToken";
 import { connectDB } from "@/dbconfig/connectDB";
-import { SuccessBody } from "@/utils/Response/SuccessBody";
 import { extractSearchParamsToObject } from "@/utils";
+import { ApiResponse } from "@/templates/apiResponse";
 
 connectDB();
 
-export async function PATCH(request: NextRequest) {
+export async function PATCH(request: NextRequest): Promise<NextResponse<ApiResponse>> {
     try {
         const userId = getUserIdFromCookies(request);
         if (!userId)
             return NextResponse.json(
-                { message: "Unauthenticated request" },
+                { success: false, error: { message: "Unauthenticated request" } },
                 { status: 401 }
             );
 
         if (!(await User.exists({ _id: userId })))
             return NextResponse.json(
-                { error: "Invalid accessToken" },
+                { success: false, error: { message: "Invalid accessToken" } },
                 { status: 401 }
             );
 
@@ -33,7 +33,10 @@ export async function PATCH(request: NextRequest) {
             })
         )
             return NextResponse.json(
-                { error: "Provide atleast 1 field to update" },
+                {
+                    success: false,
+                    error: { message: "Provide atleast 1 field to update" }
+                },
                 { status: 400 }
             );
 
@@ -45,28 +48,35 @@ export async function PATCH(request: NextRequest) {
         )
             return NextResponse.json(
                 {
-                    error: "Gender must be MALE or FEMALE or RATHER-NOT-SAY. Make sure you exactly match case and dashes",
+                    success: false,
+                    error: { message: "Gender must be MALE or FEMALE or RATHER-NOT-SAY. Make sure you exactly match case and dashes" },
                 },
                 { status: 400 }
             );
 
         const updatedUser = await User.findByIdAndUpdate(userId, searchParams, {
             new: true,
-        });
+        }).select('-password');
 
         if (!updatedUser)
             return NextResponse.json(
                 {
-                    error: "Something went wrong while updating the user details",
+                    success: false,
+                    error: { message: "Something went wrong while updating the user details" },
                 },
                 { status: 500 }
             );
 
         return NextResponse.json(
-            new SuccessBody(true, "User updated successfully", updatedUser),
+            {
+                success: true,
+                message: "User details updated successfully",
+                data: updatedUser
+            },
             { status: 200 }
         );
     } catch (error: any) {
         console.log(error.message);
+        return NextResponse.json({ success: false, error: { cause: error.message, message: "Something went wrong on our side" } })
     }
 }

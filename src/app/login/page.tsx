@@ -43,7 +43,7 @@ function Login() {
                 });
             } else if (response.status !== 200) {
                 setError("root", {
-                    message: response.statusText,
+                    message: response.statusText || response.data.error.message,
                 });
             } else {
                 appDispatch(login());
@@ -51,7 +51,7 @@ function Login() {
             }
         } catch (error: any) {
             setError("root", {
-                message: error?.response?.data?.error,
+                message: error?.response?.data?.error?.message,
             });
         }
     };
@@ -92,7 +92,8 @@ function Login() {
                             </section>
                             {errors.username_or_email && (
                                 <div className="text-red-300 text-sm font-light text-center">
-                                    {errors.username_or_email.message}
+                                    {errors.username_or_email &&
+                                        errors.username_or_email.message}
                                 </div>
                             )}
 
@@ -122,29 +123,43 @@ function Login() {
 
                             {errors.password && (
                                 <div className="text-red-300 text-sm font-light text-center">
-                                    {errors.password.message}
+                                    {errors.password && errors.password.message}
                                 </div>
                             )}
+
+                            <p className="w-full pr-0.5 text-right text-[.915rem] font-medium">
+                                <Link
+                                    className="text-sky-200 hover:underline hover:underline-offset-4 hover:text-blue-400 transition-colors duration-75"
+                                    href={"/forgotpassword"}
+                                >
+                                    Forgot password?
+                                </Link>
+                            </p>
 
                             <Button
                                 className={`py-5 pt-[1.270rem] ${isSubmitting ? "opacity-40" : "opacity-100"}`}
                                 type="submit"
                                 variant={"secondary"}
                             >
-                                {!isSubmitting ? "Login" : <Loader />}
+                                {!isSubmitting ? (
+                                    "Login"
+                                ) : (
+                                    <Loader circleClassname="bg-gray-300" />
+                                )}
                             </Button>
 
                             {errors.root && (
                                 <div className="text-red-300 text-sm font-light text-center">
-                                    {errors.root.message ??
-                                        "Network connection error"}
+                                    {errors.root &&
+                                        (errors.root.message ??
+                                            "Something went wrong")}
                                 </div>
                             )}
 
-                            <p className="font-light">
+                            <p className="font-light text-[.95rem]">
                                 New to Students Community ?
                                 <Button
-                                    className="px-3 hover:text-blue-400 transition-colors duration-75 py-1 text-[.955rem] text-white"
+                                    className="px-3 text-sky-200 hover:text-blue-400 transition-colors duration-75 py-1 text-[.925rem]"
                                     variant={"link"}
                                 >
                                     <Link href={"/signup"}>Signup</Link>

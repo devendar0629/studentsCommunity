@@ -1,16 +1,21 @@
 import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import User from "@/models/user.model";
-import { SuccessBody } from "@/utils/Response/SuccessBody";
 import Token from "@/models/token.model";
+import { ApiResponse } from "@/templates/apiResponse";
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
     try {
         const refreshToken = request.cookies.get("refreshToken")?.value;
 
         if (!refreshToken) {
             return NextResponse.json(
-                { error: "Unauthenticated request" },
+                {
+                    success: false,
+                    error: {
+                        message: "Unauthenticated request"
+                    }
+                },
                 { status: 401 }
             );
         }
@@ -22,14 +27,22 @@ export async function POST(request: NextRequest) {
         const userTokenInstance = await Token.findOne({
             user: decodedToken.id
         })
-        const user = await User.findById(userTokenInstance.user).select("-password");
 
-        if (!userTokenInstance) return NextResponse.json({ status: 401 });
+        if (!userTokenInstance)
+            return NextResponse.json({ success: false, error: { message: "Unauthenticated request" } }, { status: 401 });
+
         if (userTokenInstance.refreshToken !== refreshToken)
             return NextResponse.json(
-                { error: "Unauthenticated request" },
+                {
+                    success: false,
+                    error: {
+                        message: "Unauthenticated request"
+                    }
+                },
                 { status: 401 }
             );
+
+        const user = await User.findById(userTokenInstance.user).select("-password");
 
         // payloads
         const accessTokenPayload = {
@@ -54,10 +67,10 @@ export async function POST(request: NextRequest) {
         );
 
         const resp = NextResponse.json(
-            new SuccessBody(
-                true,
-                "Access and Refresh tokens generated successfully"
-            ),
+            {
+                success: true,
+                message: "Access and Refresh tokens generated successfully"
+            },
             { status: 200 }
         );
         resp.cookies.set("accessToken", newAccessToken);
@@ -67,7 +80,16 @@ export async function POST(request: NextRequest) {
         await userTokenInstance.save();
 
         return resp;
-    } catch (error) {
+    } catch (error: any) {
         console.log(error);
+        return NextResponse.json(
+            {
+                success: false,
+                error: {
+                    message: "Something went wrong on our side",
+                    cause: error.message
+                }
+            },
+            { status: 500 })
     }
 }

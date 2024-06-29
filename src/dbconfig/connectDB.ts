@@ -1,5 +1,5 @@
 // import mongoose from "mongoose"
-import * as mongoose from "mongoose";
+import mongoose from "mongoose";
 
 const connectDB = async () => {
     try {
@@ -21,6 +21,7 @@ const connectDB = async () => {
         });
     } catch (error: any) {
         console.log(error.message);
+        process.exit(1);
     }
 };
 

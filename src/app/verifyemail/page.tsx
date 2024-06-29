@@ -85,6 +85,7 @@ function VerifyEmail() {
                             />
                         </section>
                     )}
+
                     <CardTitle className="lg:text-[2.95rem] text-[1.6rem] lg:font-semibold">
                         {status === "NOT-STARTED" && "Verify Your Email"}
                         {status == "PENDING" && "Verifying . . ."}

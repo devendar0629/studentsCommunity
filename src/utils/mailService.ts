@@ -1,10 +1,11 @@
+import { generateResetPasswordOptions, generateVerifyEmailOptions } from "@/templates/email";
 import nodemailer from "nodemailer";
-import bcryptjs from "bcryptjs";
+
+type mailTypes = 'VERIFY-EMAIL' | 'RESET-PASSWORD'
 
 const sendMail = async (
-    emailType: string,
+    emailType: mailTypes,
     toEmail: string,
-    userId: string,
     hashedToken: string
 ) => {
     try {
@@ -18,17 +19,22 @@ const sendMail = async (
             },
         });
 
-        const mailOptions = {
-            from: "mailtrap@demomailtrap.com", // CAUTION: What is this ???
-            to: toEmail,
-            subject:
-                emailType === "VERIFY_EMAIL"
-                    ? "Verify your email"
-                    : "Reset your password",
-            html: `<p>Click <a href="${process.env.SERVER_BASE_URL}:${process.env.PORT ?? 8000}/verifyemail?token=${hashedToken}">here</a> to ${emailType === "VERIFY_EMAIL" ? "verify your email" : "reset your password"} or copy and paste the link below in your browser.<br>${process.env.SERVER_BASE_URL}:${process.env.PORT ?? 8000}/verifyemail?token=${hashedToken}<br /><br />Expires in 1hour</p>`,
-        };
+        const mailGenerators = {
+            'VERIFY-EMAIL': generateVerifyEmailOptions,
+            'RESET-PASSWORD': generateResetPasswordOptions
+        }
 
-        const mailResp = await transporter.sendMail(mailOptions);
+        // CAUTION CHECK !!!
+        const mailResp = await transporter.sendMail(mailGenerators[emailType]({
+            fromEmail: 'mailtrap@demomailtrap.com',
+            toEmail,
+            resetPasswordLink: `${process.env.SERVER_BASE_URL}:${process.env.PORT}`,
+            resetPasswordToken: hashedToken,
+            verifyEmailLink: `${process.env.SERVER_BASE_URL}:${process.env.PORT}`,
+            verifyEmailToken: hashedToken,
+            verifyEmailPathname: 'verifyemail',
+            resetPasswordPathname: 'resetpassword'
+        }));
 
         return mailResp;
     } catch (error: any) {

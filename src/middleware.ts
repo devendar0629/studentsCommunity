@@ -8,7 +8,7 @@ export async function middleware(request: NextRequest) {
     try {
         const accessToken = request.cookies.get("accessToken")?.value;
 
-        const publicUrlRegex: RegExp = /^\/api\/v1\/users\/(login|signup|verifyemail)$/;
+        const publicUrlRegex: RegExp = /^\/api\/v1\/users\/(login|signup|verifyemail|forgotpassword|resetpassword)$/;
         const isPublicUrl = publicUrlRegex.test(request.nextUrl.pathname);
 
         if (isPublicUrl && accessToken) {

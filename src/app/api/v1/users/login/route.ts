@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import bcryptjs from "bcryptjs";
 import User from "@/models/user.model";
-import { SuccessBody } from "@/utils/Response/SuccessBody";
 import { connectDB } from "@/dbconfig/connectDB";
 import Token from "@/models/token.model";
+import { ApiResponse } from "@/templates/apiResponse";
 
 connectDB();
 
@@ -41,21 +41,21 @@ interface UserInterface {
     username_or_email: string;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
     try {
         let { username_or_email, password }: UserInterface = await request.json();
         username_or_email = username_or_email?.trim();
 
         if (!username_or_email) {
             return NextResponse.json(
-                { error: "Username or email is required" },
+                { success: false, error: { message: "Username or email is required" } },
                 { status: 400 }
             );
         }
 
         if (!password) {
             return NextResponse.json(
-                { error: "Password cannot be empty" },
+                { success: false, error: { message: "Password cannot be empty" } },
                 { status: 400 }
             );
         }
@@ -66,13 +66,13 @@ export async function POST(request: NextRequest) {
 
         if (!user) {
             return NextResponse.json(
-                { error: "Unrecognized credentials" },
+                { success: false, error: { message: "Unrecognized credentials" } },
                 { status: 404 }
             );
         };
         if (user.isVerified === false) {
             return NextResponse.json(
-                { error: "User email is not verified" },
+                { success: false, error: { message: "User email is not verified" } },
                 { status: 400 }
             );
         }
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
         if (!passwordMatch)
             return NextResponse.json(
-                { error: "Invalid password" },
+                { success: true, error: { message: "Invalid password" } },
                 { status: 400 }
             );
 
@@ -116,7 +116,11 @@ export async function POST(request: NextRequest) {
         const userData = await User.findById(user._id).select('-password')
 
         const response = NextResponse.json(
-            new SuccessBody(true, "User logged in successfully", userData), { status: 200 }
+            {
+                success: true,
+                message: 'User logged in successfully',
+                data: userData
+            }, { status: 200 }
         );
 
         // send cookies
@@ -149,5 +153,14 @@ export async function POST(request: NextRequest) {
         return response;
     } catch (error: any) {
         console.log(error);
+        return NextResponse.json(
+            {
+                success: false,
+                error: {
+                    message: "Something went wrong on our side",
+                    cause: error.message
+                }
+            },
+            { status: 500 })
     }
 }

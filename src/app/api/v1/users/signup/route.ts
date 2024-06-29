@@ -3,8 +3,8 @@ import { connectDB } from "@/dbconfig/connectDB";
 import User from "@/models/user.model";
 import bcryptjs from "bcryptjs";
 import { sendMail } from "@/utils/mailService";
-import { SuccessBody } from "@/utils/Response/SuccessBody";
 import Token from '@/models/token.model'
+import { ApiResponse } from "@/templates/apiResponse";
 
 connectDB();
 
@@ -15,7 +15,7 @@ export interface UserInterface {
     confirmPassword: string;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
     try {
         let { username, email, password, confirmPassword }: UserInterface =
             await request.json();
@@ -26,7 +26,8 @@ export async function POST(request: NextRequest) {
         if ([username, confirmPassword, email, password].some((val) => !val)) {
             return NextResponse.json(
                 {
-                    error: "Username or password or email or confirmPassword cannot be empty",
+                    success: false,
+                    error: { message: "Username or password or email or confirmPassword cannot be empty" },
                 },
                 { status: 400 }
             );
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
 
         // check password match
         if (password != confirmPassword) {
-            return NextResponse.json({ error: "Passwords don't match" }, { status: 400 })
+            return NextResponse.json({ success: false, error: { message: "Passwords don't match" } }, { status: 400 })
         }
 
         const userFindByUsername: any = await User.findOne({ username });
@@ -43,10 +44,10 @@ export async function POST(request: NextRequest) {
         // Check if there exists a VERIFIED user with the same email or username
         if (userFindByEmail?.isVerified || userFindByUsername?.isVerified) {
             if (userFindByEmail?.username === username || userFindByUsername?.username === username) {
-                return NextResponse.json({ message: "Username is already taken" }, { status: 400 })
+                return NextResponse.json({ success: false, error: { message: "Username is already taken" } }, { status: 400 })
             }
             else if (userFindByEmail?.email === email || userFindByUsername?.email === email) {
-                return NextResponse.json({ message: "Email is already taken" }, { status: 400 })
+                return NextResponse.json({ success: false, error: { message: "Email is already taken" } }, { status: 400 })
             }
         }
 
@@ -104,12 +105,10 @@ export async function POST(request: NextRequest) {
         await currentUser.save();
         await tokenInstance.save();
 
-        // send activation link to user
         const mail = await sendMail(
-            "VERIFY_EMAIL",
+            "VERIFY-EMAIL",
             currentUser.email,
-            currentUser?._id?.toString(),
-            hashedToken
+            hashedToken,
         );
 
         const userResponse = await User.findOne({
@@ -117,17 +116,21 @@ export async function POST(request: NextRequest) {
         }).select('-password')
 
         return NextResponse.json(
-            new SuccessBody(
-                true,
-                `User ${statusFlag === 'ExistingUser' ? 'updated' : 'created'} successfully.`,
-                userResponse
-            ),
+            {
+                success: true,
+                data: userResponse,
+                message: `User ${statusFlag == 'ExistingUser' ? 'updated' : 'created'} successfully`
+            },
             { status: 201 }
         );
     } catch (error: any) {
         console.log(error);
         return NextResponse.json({
-            error: "Something went wrong while signing up"
+            success: false,
+            error: {
+                message: 'Something went wrong on our side',
+                cause: error.message
+            }
         }, { status: 500 })
     }
 }

@@ -1,18 +1,18 @@
-import { SuccessBody } from "@/utils/Response/SuccessBody";
 import { NextResponse, NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
 import { connectDB } from "@/dbconfig/connectDB";
 import Token from "@/models/token.model";
+import { ApiResponse } from "@/templates/apiResponse";
 
 connectDB();
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
     try {
         const accessToken = request.cookies.get("accessToken")?.value;
 
         if (!accessToken) {
             return NextResponse.json(
-                { error: "Unauthorized request" },
+                { success: false, error: { message: "Unauthorized request" } },
                 { status: 403 }
             );
         }
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
         if ((decodedToken.exp * 1000) <= Date.now()) {
             return NextResponse.json(
-                { error: "Refresh token expired" },
+                { success: false, error: { message: "Refresh token expired" } },
                 { status: 401 }
             );
         }
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         await userTokenInstance.save();
 
         const resp = NextResponse.json(
-            new SuccessBody(true, "User logged out successfully"),
+            { success: true, message: "User logged out successfully" },
             { status: 200 }
         );
         resp.cookies.delete('accessToken');
@@ -47,5 +47,14 @@ export async function POST(request: NextRequest) {
         return resp;
     } catch (error: any) {
         console.log(error.message);
+        return NextResponse.json(
+            {
+                success: false,
+                error: {
+                    message: "Something went wrong on our side",
+                    cause: error.message
+                }
+            },
+            { status: 500 })
     }
 }
